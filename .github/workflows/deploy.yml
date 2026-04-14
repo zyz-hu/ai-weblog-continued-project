@@ -1,0 +1,230 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+# Required GitHub secrets:
+# DOCKER_USERNAME, DOCKER_PASSWORD, SERVER_HOST, SERVER_USER, SERVER_PASSWORD,
+# JWT_SECRET, NACOS_SERVER_ADDR
+# Optional GitHub variable:
+# NACOS_NAMESPACE (defaults to prod when omitted)
+
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - name: weblog-springboot
+            build-dir: ./backend/weblog-springboot
+            context: ./backend/weblog-springboot
+            dockerfile: ./backend/weblog-springboot/Dockerfile
+            port: 8082
+          - name: weblog-gateway
+            build-dir: ./backend/weblog-gateway
+            context: ./backend/weblog-gateway
+            dockerfile: ./backend/weblog-gateway/Dockerfile
+            port: 80
+          - name: zyz-ai-robot
+            build-dir: ./backend/zyz-ai-robot-springboot
+            context: ./backend/zyz-ai-robot-springboot
+            dockerfile: ./backend/zyz-ai-robot-springboot/Dockerfile
+            port: 8080
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+          cache: maven
+
+      - name: Build with Maven
+        run: |
+          cd ${{ matrix.service.build-dir }}
+          mvn clean package -DskipTests
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service.context }}
+          file: ${{ matrix.service.dockerfile }}
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/${{ matrix.service.name }}:latest,${{ secrets.DOCKER_USERNAME }}/${{ matrix.service.name }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: npm
+          cache-dependency-path: ./front/weblog-vue3/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd front/weblog-vue3
+          npm install
+
+      - name: Build production
+        run: |
+          cd front/weblog-vue3
+          npm run build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./front/weblog-vue3
+          file: ./front/weblog-vue3/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/weblog-frontend:latest,${{ secrets.DOCKER_USERNAME }}/weblog-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: [build-backend, build-frontend]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          password: ${{ secrets.SERVER_PASSWORD }}
+          port: 22
+          script: |
+            mkdir -p ~/weblog-deploy
+            cd ~/weblog-deploy
+
+            export DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+            export NACOS_NAMESPACE="${{ vars.NACOS_NAMESPACE }}"
+            export NACOS_SERVER_ADDR="${{ secrets.NACOS_SERVER_ADDR }}"
+
+            if [ -z "$DOCKER_USERNAME" ]; then
+              echo "DOCKER_USERNAME secret is required"
+              exit 1
+            fi
+
+            if [ -z "$NACOS_NAMESPACE" ]; then
+              export NACOS_NAMESPACE="prod"
+            fi
+
+            if [ -z "$NACOS_SERVER_ADDR" ]; then
+              echo "NACOS_SERVER_ADDR secret is required"
+              exit 1
+            fi
+
+            docker pull "${DOCKER_USERNAME}/weblog-springboot:latest"
+            docker pull "${DOCKER_USERNAME}/weblog-gateway:latest"
+            docker pull "${DOCKER_USERNAME}/zyz-ai-robot:latest"
+            docker pull "${DOCKER_USERNAME}/weblog-frontend:latest"
+
+            docker stop weblog-springboot weblog-gateway zyz-ai-robot weblog-frontend 2>/dev/null || true
+            docker rm weblog-springboot weblog-gateway zyz-ai-robot weblog-frontend 2>/dev/null || true
+
+            docker run -d \
+              --name weblog-springboot \
+              --network host \
+              -e NACOS_NAMESPACE="$NACOS_NAMESPACE" \
+              -e NACOS_SERVER_ADDR="$NACOS_SERVER_ADDR" \
+              "${DOCKER_USERNAME}/weblog-springboot:latest"
+
+            docker run -d \
+              --name weblog-gateway \
+              --network host \
+              -e NACOS_NAMESPACE="$NACOS_NAMESPACE" \
+              -e NACOS_SERVER_ADDR="$NACOS_SERVER_ADDR" \
+              -e SERVER_PORT=8081 \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              "${DOCKER_USERNAME}/weblog-gateway:latest"
+
+            docker run -d \
+              --name zyz-ai-robot \
+              --network host \
+              -e NACOS_NAMESPACE="$NACOS_NAMESPACE" \
+              -e NACOS_SERVER_ADDR="$NACOS_SERVER_ADDR" \
+              "${DOCKER_USERNAME}/zyz-ai-robot:latest"
+
+            docker run -d \
+              --name weblog-frontend \
+              -p 80:80 \
+              "${DOCKER_USERNAME}/weblog-frontend:latest"
+
+            docker image prune -af --filter "until=24h"
+
+            echo "Waiting for containers to start..."
+            sleep 20
+
+            FAILED_CONTAINERS=""
+
+            for container in weblog-gateway weblog-springboot zyz-ai-robot weblog-frontend; do
+              STATUS=$(docker inspect -f '{{.State.Status}}' "$container" 2>/dev/null || echo "not_found")
+              if [ "$STATUS" != "running" ]; then
+                FAILED_CONTAINERS="$FAILED_CONTAINERS $container($STATUS)"
+                echo "Container check failed: $container -> $STATUS"
+                docker logs "$container" --tail 20
+              else
+                echo "Container running: $container"
+              fi
+            done
+
+            if [ -n "$FAILED_CONTAINERS" ]; then
+              echo "The following containers failed to start:$FAILED_CONTAINERS"
+              exit 1
+            fi
+
+      - name: Health check
+        run: |
+          echo "Waiting for services to start..."
+          sleep 30
+
+          if curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_HOST }} | grep -q "200\|304"; then
+            echo "Frontend service is reachable"
+          else
+            echo "Frontend service may still be starting"
+          fi
+
+          if curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.SERVER_HOST }}:8082/api | grep -q "200\|401\|404"; then
+            echo "Backend API is reachable"
+          else
+            echo "Backend API may still be starting"
+          fi
+
+          echo "Frontend: http://${{ secrets.SERVER_HOST }}"
+          echo "API: http://${{ secrets.SERVER_HOST }}:8082/api"

@@ -1,0 +1,100 @@
+# Basic infrastructure services for local development.
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-change_me}"
+      MYSQL_DATABASE: "${MYSQL_DATABASE:-weblog}"
+    volumes:
+      - ai-weblog-project-docker_mysql-data:/var/lib/mysql
+      - ./mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "127.0.0.1:3306:3306"
+    networks:
+      - infrastructure-network
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-change_me}"
+      POSTGRES_DB: "${POSTGRES_DB:-robot}"
+    volumes:
+      - ai-weblog-project-docker_pg-data:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks:
+      - infrastructure-network
+
+  nacos:
+    image: nacos/nacos-server:v2.3.0
+    container_name: nacos
+    restart: always
+    environment:
+      MODE: standalone
+    volumes:
+      - nacos-data:/home/nacos/data
+      - nacos-logs:/home/nacos/logs
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    networks:
+      - infrastructure-network
+
+  minio:
+    image: minio/minio:RELEASE.2023-09-30T07-02-29Z
+    container_name: minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER:-minioadmin}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD:-change_me}"
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - infrastructure-network
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    restart: always
+    ports:
+      - "8888:8080"
+    environment:
+      INSTANCE_NAME: "searxng"
+      SEARXNG_PORT: "8080"
+      SEARXNG_BIND_ADDRESS: "0.0.0.0"
+      SEARXNG_BASE_URL: "http://searxng:8080/"
+      SEARXNG_LIMITER: "false"
+      SEARXNG_PUBLIC_INSTANCE: "false"
+      SEARXNG_SECRET: "${SEARXNG_SECRET:-change_me_before_production}"
+    volumes:
+      - ./deploy/searxng/settings.yml:/etc/searxng/settings.yml:ro
+    networks:
+      - infrastructure-network
+
+volumes:
+  ai-weblog-project-docker_mysql-data:
+    name: infrastructure-mysql-data
+  ai-weblog-project-docker_pg-data:
+    name: infrastructure-pg-data
+  minio-data:
+    name: infrastructure-minio-data
+  nacos-data:
+    name: infrastructure-nacos-data
+  nacos-logs:
+    name: infrastructure-nacos-logs
+
+networks:
+  infrastructure-network:
+    name: infrastructure-network
+    driver: bridge

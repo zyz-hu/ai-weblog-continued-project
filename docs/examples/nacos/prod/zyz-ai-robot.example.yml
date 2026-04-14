@@ -1,0 +1,90 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /robot
+
+spring:
+  datasource:
+    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+    url: jdbc:p6spy:postgresql://<postgres-host>:5432/robot
+    username: <postgres-username>
+    password: <postgres-password>
+    hikari:
+      pool-name: AI-Robot-HikariCP
+      auto-commit: true
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-test-query: SELECT 1
+      validation-timeout: 5000
+  ai:
+    deepseek:
+      api-key: <deepseek-api-key>
+      base-url: https://api.deepseek.com
+      chat:
+        options:
+          model: deepseek-chat
+          temperature: 0.8
+    openai:
+      base-url: https://dashscope.aliyuncs.com/compatible-mode
+      api-key: <openai-compatible-api-key>
+      chat:
+        options:
+          model: qwen3-max
+          temperature: 0.7
+      embedding:
+        options:
+          model: text-embedding-v4
+          dimensions: 1536
+    vectorstore:
+      pgvector:
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        dimensions: 1536
+        max-document-batch-size: 10000
+        table-name: t_vector_store
+
+okhttp:
+  connect-timeout: 5000
+  read-timeout: 30000
+  write-timeout: 15000
+  max-idle-connections: 200
+  keep-alive-duration: 5
+
+searxng:
+  url: http://<searxng-host>:8888/search
+  count: 10
+
+customer-service:
+  md-storage-path: ${CUSTOMER_SERVICE_MD_STORAGE_PATH:./data/md}
+
+ark:
+  base-url: https://ark.cn-beijing.volces.com/api/v3
+  api-key: <ark-api-key>
+  timeout-seconds: 1800
+  connect-timeout-seconds: 20
+  retry-times: 2
+  models:
+    ark-deepseek-v3-2:
+      model-id: <ark-model-id>
+      extra-headers: {}
+
+jwt:
+  issuer: <jwt-issuer>
+  secret: <base64-jwt-secret>
+  tokenHeaderKey: Authorization
+  tokenPrefix: Bearer
+
+auth:
+  whitelist:
+    - /robot/actuator/**
+    - /robot/swagger-ui/**
+    - /robot/swagger-resources/**
+    - /robot/v3/api-docs/**
+    - /robot/webjars/**
+    - /robot/favicon.ico
+
+logging:
+  config: classpath:log4j2.xml

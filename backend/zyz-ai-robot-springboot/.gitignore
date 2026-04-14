@@ -1,0 +1,55 @@
+#/data/md/747cfc5d-d6ef-46e5-9fb2-80090fa2f146-新建笔记(20251130).md
+#/data/md/9264ef65-6343-4593-b10b-712591cf8851-新建笔记(20251130).md
+#/target/ai-robot-0.0.1-SNAPSHOT.jar.original
+#/logs/application-2025-12-20.log
+#/logs/application-2025-12-20-1.log
+#/logs/application-2025-12-22.log
+#/logs/application-2025-12-22-1.log
+#/logs/application-2025-12-23.log
+#/logs/application-2026-01-01.log
+#/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+#/logs/error-2025-12-20.log
+#/logs/error-2025-12-22.log
+#/logs/error-2025-12-22-1.log
+#/logs/error-2025-12-23.log
+#/logs/error-2026-01-01.log
+#/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
+#/target/maven-archiver/pom.properties
+#/target/ai-robot-0.0.1-SNAPSHOT.jar
+/logs/
+#/target/
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+/data/
+/target/

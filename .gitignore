@@ -1,0 +1,65 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+.DS_Store
+
+# IDE
+.idea/
+.codebuddy/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Local config and secrets
+.env
+.env.*
+*.env
+!.env.example
+nacos-configs/
+import-nacos-configs.sh
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+
+# Private resume / interview materials
+.resume-private/
+interview-prep.md
+agent.md
+我的中期报告和中期检查表/
+*.docx
+*.doc
+
+# Private study workspace
+study/

@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  color: var(--app-text);
+  font-size: 16px;
+  background-color: var(--app-bg);
+  line-height: 1.7;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+[type='text']:focus,
+[type='email']:focus,
+[type='url']:focus,
+[type='password']:focus,
+[type='number']:focus,
+[type='date']:focus,
+[type='datetime-local']:focus,
+[type='month']:focus,
+[type='search']:focus,
+[type='tel']:focus,
+[type='time']:focus,
+[type='week']:focus,
+[multiple]:focus,
+textarea:focus,
+select:focus {
+  box-shadow: 0 0 0 1px transparent inset !important;
+}
+
+:root {
+  --app-bg: #ffffff;
+  --app-text: #0f172a;
+  --sidebar-bg: #f8fafc;
+  --sidebar-border: #e2e8f0;
+  --card-surface: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(226, 232, 240, 0.9);
+  --panel-bg: #f5f6f8;
+  --panel-border: #e5e7eb;
+  --front-text: #0f172a;
+  --front-text-muted: #475569;
+  --front-text-soft: #64748b;
+  --front-text-weaker: #94a3b8;
+  --front-border-strong: rgba(226, 232, 240, 0.92);
+  --front-border-soft: rgba(226, 232, 240, 0.8);
+  --front-surface-strong: rgba(255, 255, 255, 0.92);
+  --front-surface-soft: rgba(248, 250, 252, 0.92);
+  --front-hover-surface: rgba(248, 250, 252, 0.9);
+  --front-pagination-bg: rgba(255, 255, 255, 0.82);
+  --front-pagination-border: rgba(226, 232, 240, 0.92);
+  --front-pagination-hover-bg: rgba(148, 163, 184, 0.16);
+  --front-pagination-active-bg: #0f172a;
+  --front-pagination-active-text: #ffffff;
+  --front-float-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
+}
+
+:root.dark {
+  --app-bg: #000000;
+  --app-text: #e5e7eb;
+  --sidebar-bg: #060606;
+  --sidebar-border: #1f1f1f;
+  --card-surface: rgba(0, 0, 0, 0.92);
+  --card-border: rgba(32, 32, 32, 0.9);
+  --panel-bg: #0c0c0c;
+  --panel-border: #1f1f1f;
+  --front-text: #e5e7eb;
+  --front-text-muted: #cbd5e1;
+  --front-text-soft: #94a3b8;
+  --front-text-weaker: #64748b;
+  --front-border-strong: rgba(51, 65, 85, 0.92);
+  --front-border-soft: rgba(51, 65, 85, 0.74);
+  --front-surface-strong: rgba(2, 6, 23, 0.8);
+  --front-surface-soft: rgba(15, 23, 42, 0.62);
+  --front-hover-surface: rgba(15, 23, 42, 0.86);
+  --front-pagination-bg: rgba(2, 6, 23, 0.78);
+  --front-pagination-border: rgba(51, 65, 85, 0.92);
+  --front-pagination-hover-bg: rgba(51, 65, 85, 0.62);
+  --front-pagination-active-bg: #e2e8f0;
+  --front-pagination-active-text: #0f172a;
+  --front-float-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+}
+
+.glass-card {
+  border-radius: 22px;
+  background: var(--card-surface);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(12px);
+}
+
+.page-shell {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 1.75rem 2.25rem;
+}
+
+.section-title {
+  @apply text-xs font-semibold tracking-[0.2em] uppercase;
+  color: var(--front-text-soft);
+}
+
+.stream-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.ai-robot-shell {
+  min-height: 100vh;
+  overflow: hidden;
+  z-index: 0; /* 容器层级压低，内部内容可在更高层显示 */
+}
+
+/* 前台首页暗色背景兜底，确保 html.dark 生效 */
+.dark .home-aura {
+  background:
+    radial-gradient(80% 60% at 20% 20%, rgba(94, 138, 255, 0.16), transparent 55%),
+    radial-gradient(70% 50% at 80% 0%, rgba(109, 230, 210, 0.14), transparent 45%),
+    #050912 !important;
+  color: #e5e7eb;
+}
+
+.dark .glass-card {
+  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.32);
+}
+
+.front-text {
+  color: var(--front-text);
+}
+
+.front-text-muted {
+  color: var(--front-text-muted);
+}
+
+.front-text-soft {
+  color: var(--front-text-soft);
+}
+
+.front-text-weaker {
+  color: var(--front-text-weaker);
+}
+
+.front-border {
+  border-color: var(--front-border-strong);
+}
+
+.front-border-soft {
+  border-color: var(--front-border-soft);
+}
+
+.front-surface {
+  background: var(--front-surface-strong);
+  border-color: var(--front-border-strong);
+}
+
+.front-surface-soft {
+  background: var(--front-surface-soft);
+  border-color: var(--front-border-soft);
+}
+
+.front-hover-surface {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.front-hover-surface:hover {
+  background: var(--front-hover-surface);
+}
+
+.front-pagination {
+  background: var(--front-pagination-bg);
+  border: 1px solid var(--front-pagination-border);
+  box-shadow: var(--front-float-shadow);
+  backdrop-filter: blur(12px);
+}
+
+.front-pagination-btn {
+  color: var(--front-text-muted);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.front-pagination-btn:hover:not(:disabled) {
+  background: var(--front-pagination-hover-bg);
+  color: #6366f1;
+}
+
+.front-pagination-btn:disabled {
+  color: var(--front-text-weaker);
+}
+
+.front-pagination-btn-active {
+  background: var(--front-pagination-active-bg);
+  color: var(--front-pagination-active-text);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+}
+
+.dark .front-pagination-btn-active {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
+}

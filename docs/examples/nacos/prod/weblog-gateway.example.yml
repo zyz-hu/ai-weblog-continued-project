@@ -1,0 +1,40 @@
+server:
+  port: 8081
+
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: robot-route
+          uri: lb://zyz-ai-robot
+          predicates:
+            - Path=/api/robot/**,/api/chat/**
+          filters:
+            - StripPrefix=1
+        - id: admin-route
+          uri: lb://weblog-springboot
+          predicates:
+            - Path=/api/admin/**
+          filters:
+            - StripPrefix=1
+        - id: blog-api-route
+          uri: lb://weblog-springboot
+          predicates:
+            - Path=/api/**
+          filters:
+            - StripPrefix=1
+
+jwt:
+  issuer: <jwt-issuer>
+  secret: <base64-jwt-secret>
+  tokenExpireTime: 1440
+  tokenHeaderKey: Authorization
+  tokenPrefix: Bearer
+
+auth:
+  whitelist: /api/login,/api/logout,/actuator/**,/swagger-ui/**,/swagger-resources/**,/v3/api-docs/**,/webjars/**,/favicon.ico
+  secure-paths: /api/admin/**,/api/robot/**,/api/chat/**

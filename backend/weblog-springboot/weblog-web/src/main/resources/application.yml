@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: weblog-springboot  # 服务名称
+  profiles:
+    active: dev              # 默认激活 dev 环境
