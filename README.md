@@ -11,7 +11,7 @@
 - 本地基础设施通过 `.env` 和 `docker-compose.yml` 启动
 - 后端服务通过环境变量和 Nacos 获取配置
 - 线上部署通过 GitHub Actions Secrets / Variables 注入敏感参数
-- `auth-service` 当前不在默认开源部署链路中
+- 当前公开版本默认只保留博客主链路与 AI 模块
 
 ## What This Project Includes
 
@@ -69,8 +69,7 @@ flowchart LR
 +-- backend/
 |   +-- weblog-springboot/         # Blog service (multi-module Maven project)
 |   +-- weblog-gateway/            # API gateway
-|   +-- zyz-ai-robot-springboot/   # AI service
-|   `-- auth-service/              # Legacy service, not in default open-source deployment flow
+|   `-- zyz-ai-robot-springboot/   # AI service
 +-- front/
 |   `-- weblog-vue3/               # Vue 3 frontend
 +-- docs/
@@ -126,6 +125,11 @@ Copy-Item .env.example .env
 ```powershell
 docker compose up -d
 ```
+
+说明：
+
+- 当前仓库未附带数据库初始化 SQL，因此 `docker compose` 负责启动基础设施容器，不负责自动建表
+- 你需要自行准备 MySQL / PostgreSQL 的表结构和初始化数据
 
 ### 2. Prepare Nacos Configs
 
@@ -190,7 +194,6 @@ mvn spring-boot:run
 
 - `weblog-springboot` 和 `weblog-gateway` 是博客主链路必需
 - `zyz-ai-robot` 是可选模块，但如果你要体验 AI 对话、知识库和文章润色，则需要启动
-- `auth-service` 当前不是默认开源运行链路的一部分
 
 ### 4. Start Frontend
 
@@ -215,10 +218,6 @@ npm run dev
 | `MINIO_ACCESS_KEY` | `weblog-springboot` | MinIO Access Key |
 | `MINIO_SECRET_KEY` | `weblog-springboot` | MinIO Secret Key |
 | `MINIO_BUCKET_NAME` | `weblog-springboot` | MinIO Bucket 名称 |
-| `AUTH_DB_URL` | `auth-service` | Legacy auth 数据库连接串 |
-| `AUTH_DB_USERNAME` | `auth-service` | Legacy auth 用户名 |
-| `AUTH_DB_PASSWORD` | `auth-service` | Legacy auth 密码 |
-
 ## Production Deployment Parameters
 
 当前 GitHub Actions 默认部署以下镜像：

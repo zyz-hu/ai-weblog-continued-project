@@ -10,7 +10,6 @@ services:
       MYSQL_DATABASE: "${MYSQL_DATABASE:-weblog}"
     volumes:
       - ai-weblog-project-docker_mysql-data:/var/lib/mysql
-      - ./mysql-init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "127.0.0.1:3306:3306"
     networks:
@@ -25,7 +24,6 @@ services:
       POSTGRES_DB: "${POSTGRES_DB:-robot}"
     volumes:
       - ai-weblog-project-docker_pg-data:/var/lib/postgresql/data
-      - ./postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "127.0.0.1:5432:5432"
     networks:
@@ -77,8 +75,6 @@ services:
       SEARXNG_LIMITER: "false"
       SEARXNG_PUBLIC_INSTANCE: "false"
       SEARXNG_SECRET: "${SEARXNG_SECRET:-change_me_before_production}"
-    volumes:
-      - ./deploy/searxng/settings.yml:/etc/searxng/settings.yml:ro
     networks:
       - infrastructure-network
 
