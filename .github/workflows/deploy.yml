@@ -128,16 +128,26 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
+          command_timeout: 30m
+          script_stop: true
           script: |
+            set -eu
+
             mkdir -p ~/weblog-deploy
             cd ~/weblog-deploy
 
             export DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}"
+            export DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}"
             export NACOS_NAMESPACE="${{ vars.NACOS_NAMESPACE }}"
             export NACOS_SERVER_ADDR="${{ secrets.NACOS_SERVER_ADDR }}"
 
             if [ -z "$DOCKER_USERNAME" ]; then
               echo "DOCKER_USERNAME secret is required"
+              exit 1
+            fi
+
+            if [ -z "$DOCKER_PASSWORD" ]; then
+              echo "DOCKER_PASSWORD secret is required"
               exit 1
             fi
 
@@ -150,14 +160,20 @@ jobs:
               exit 1
             fi
 
+            echo "Logging in to Docker Hub on server..."
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+            echo "Pulling latest images..."
             docker pull "${DOCKER_USERNAME}/weblog-springboot:latest"
             docker pull "${DOCKER_USERNAME}/weblog-gateway:latest"
             docker pull "${DOCKER_USERNAME}/zyz-ai-robot:latest"
             docker pull "${DOCKER_USERNAME}/weblog-frontend:latest"
 
+            echo "Stopping existing containers..."
             docker stop weblog-springboot weblog-gateway zyz-ai-robot weblog-frontend 2>/dev/null || true
             docker rm weblog-springboot weblog-gateway zyz-ai-robot weblog-frontend 2>/dev/null || true
 
+            echo "Starting weblog-springboot..."
             docker run -d \
               --name weblog-springboot \
               --network host \
@@ -165,6 +181,7 @@ jobs:
               -e NACOS_SERVER_ADDR="$NACOS_SERVER_ADDR" \
               "${DOCKER_USERNAME}/weblog-springboot:latest"
 
+            echo "Starting weblog-gateway..."
             docker run -d \
               --name weblog-gateway \
               --network host \
@@ -174,6 +191,7 @@ jobs:
               -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
               "${DOCKER_USERNAME}/weblog-gateway:latest"
 
+            echo "Starting zyz-ai-robot..."
             docker run -d \
               --name zyz-ai-robot \
               --network host \
@@ -181,15 +199,14 @@ jobs:
               -e NACOS_SERVER_ADDR="$NACOS_SERVER_ADDR" \
               "${DOCKER_USERNAME}/zyz-ai-robot:latest"
 
+            echo "Starting weblog-frontend..."
             docker run -d \
               --name weblog-frontend \
               -p 80:80 \
               "${DOCKER_USERNAME}/weblog-frontend:latest"
 
-            docker image prune -af --filter "until=24h"
-
             echo "Waiting for containers to start..."
-            sleep 20
+            sleep 40
 
             FAILED_CONTAINERS=""
 
@@ -206,8 +223,13 @@ jobs:
 
             if [ -n "$FAILED_CONTAINERS" ]; then
               echo "The following containers failed to start:$FAILED_CONTAINERS"
+              echo "Current container snapshot:"
+              docker ps -a
               exit 1
             fi
+
+            echo "Container snapshot after deploy:"
+            docker ps -a
 
       - name: Health check
         run: |
